@@ -74,12 +74,17 @@ static void blink_led(void)
 {
     /* Set the GPIO level according to the state (LOW or HIGH)*/
     gpio_set_level(BLINK_GPIO, s_led_state);
+
+    gpio_dump_io_configuration(stdout, (1ULL << BLINK_GPIO));
+    ESP_LOGI(TAG, "\n");
 }
 
 static void configure_led(void)
 {
     ESP_LOGI(TAG, "Example configured to blink GPIO LED!");
     gpio_reset_pin(BLINK_GPIO);
+    gpio_set_pull_mode(BLINK_GPIO, GPIO_FLOATING);
+    gpio_set_drive_capability(BLINK_GPIO, GPIO_DRIVE_CAP_2);
     /* Set the GPIO as a push/pull output */
     gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
 }
@@ -93,6 +98,8 @@ void app_main(void)
 
     /* Configure the peripheral according to the LED type */
     configure_led();
+
+    gpio_dump_io_configuration(stdout, SOC_GPIO_VALID_GPIO_MASK);
 
     while (1) {
         ESP_LOGI(TAG, "Turning the LED %s!", s_led_state == true ? "ON" : "OFF");
