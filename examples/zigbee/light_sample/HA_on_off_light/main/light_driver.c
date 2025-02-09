@@ -57,6 +57,26 @@ void light_driver_set_color(uint32_t r, uint32_t g, uint32_t b)
   ESP_ERROR_CHECK(led_strip_refresh(s_led_strip));
 }
 
+void light_driver_set_hue_and_saturation(uint16_t hue, uint16_t sat)
+{
+  // Placeholder: set greenish for now.
+  s_red = sat;
+  s_green = 255;
+  s_blue = sat;
+  ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, 0, s_red, s_green, s_blue));
+  ESP_ERROR_CHECK(led_strip_refresh(s_led_strip));
+}
+
+void light_driver_set_brightness(uint16_t brightness)
+{
+  // Placeholder: set brightness but only for white.
+  s_red = brightness;
+  s_green = brightness;
+  s_blue = brightness;
+  ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, 0, s_red, s_green, s_blue));
+  ESP_ERROR_CHECK(led_strip_refresh(s_led_strip));
+}
+
 void light_driver_init(bool power)
 {
     led_strip_config_t led_strip_conf = {

@@ -24,8 +24,8 @@
 #define ESP_ZB_PRIMARY_CHANNEL_MASK     ESP_ZB_TRANSCEIVER_ALL_CHANNELS_MASK /* Zigbee primary channel mask use in the example */
 
 /* Basic manufacturer information */
-#define ESP_MANUFACTURER_NAME "\x09""JoesTinkering"      /* Customized manufacturer name */
-#define ESP_MODEL_IDENTIFIER "\x07"CONFIG_IDF_TARGET"-Joe" /* Customized model identifier */
+#define ESP_MANUFACTURER_NAME "\x09""Joe"      /* Customized manufacturer name */
+#define ESP_MODEL_IDENTIFIER "\x07"CONFIG_IDF_TARGET"J" /* Customized model identifier */
 
 #define ESP_ZB_ZED_CONFIG()                                         \
     {                                                               \
