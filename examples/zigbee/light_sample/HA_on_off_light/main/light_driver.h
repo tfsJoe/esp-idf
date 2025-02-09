@@ -58,6 +58,8 @@ extern "C" {
 */
 void light_driver_set_power(bool power);
 
+void light_driver_set_color(uint32_t r, uint32_t g, uint32_t b)
+
 /**
 * @brief color light driver init, be invoked where you want to use color light
 *
