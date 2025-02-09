@@ -60,9 +60,9 @@ void light_driver_set_power(bool power);
 
 void light_driver_set_color(uint32_t r, uint32_t g, uint32_t b);
 
-void light_driver_set_hue_and_saturation(uint16_t hue, uint16_t sat);
+void light_driver_set_hue_and_saturation(uint8_t hue, uint8_t sat);
 
-void light_driver_set_brightness(uint16_t brightness);
+void light_driver_set_brightness(uint8_t brightness);
 
 /**
 * @brief color light driver init, be invoked where you want to use color light

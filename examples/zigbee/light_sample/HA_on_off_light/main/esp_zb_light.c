@@ -106,18 +106,16 @@ static esp_err_t zb_attribute_handler(const esp_zb_zcl_set_attr_value_message_t 
         }
         else if (message->info.cluster == ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL) 
         {
-          // First value is 16-bit hue. Second value is 8-bit saturation, but packed into 16-bits.
-          u_int16_t *hue_sat = (u_int16_t *)message->attribute.data.value;
+          uint8_t *hue_sat = (uint8_t *)message->attribute.data.value;
           
-
-          ESP_LOGI(TAG, "Hue: %u | Saturation:%u, B=%u", hue_sat[0], hue_sat[1]);
+          ESP_LOGI(TAG, "Hue: %hu | Saturation:%hu", hue_sat[0], hue_sat[1]);
 
           light_driver_set_hue_and_saturation(hue_sat[0], hue_sat[1]);
         }
-        else if (message->info.cluster = ESP_ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL && message->attribute.data.size == 1)
+        else if (message->info.cluster == ESP_ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL && message->attribute.data.size == 1)
         {
-          uint16_t brightness = message->attribute.data.value;
-          ESP_LOGI(TAG, "Level set: %u", brightness);
+          uint8_t brightness = (uint8_t)message->attribute.data.value;
+          ESP_LOGI(TAG, "Level set: %hu", brightness);
           light_driver_set_brightness(brightness);
         }
         else if (message->info.cluster == ESP_ZB_ZCL_CLUSTER_ID_IDENTIFY)
