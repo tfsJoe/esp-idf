@@ -106,13 +106,15 @@ static esp_err_t zb_attribute_handler(const esp_zb_zcl_set_attr_value_message_t 
         }
         else if (message->info.cluster == ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL) 
         {
-          uint16_t *hue_sat = (uint16_t *)message->attribute.data.value;
-          uint8_t hue = (uint8_t)(*hue_sat & 0xFF);        // Extract lower byte
-          uint8_t saturation = (uint8_t)((*hue_sat >> 8) & 0xFF);  // Extract upper byte
+          uint16_t* xy = (uint16_t *)message->attribute.data.value;
 
-          ESP_LOGI(TAG, "Hue: %hu | Saturation:%hu (datatype: %hu, size: %u)", hue, saturation, message->attribute.data.type, message->attribute.data.size);
+          uint8_t rgb[3];
 
-          light_driver_set_hue_and_saturation(hue, saturation);
+          // Convert XY to RGB
+          cie1931_to_rgb(rgb, xy[0], xy[1]);
+          light_driver_set_color(rgb[0], rgb[1], rgb[2]);
+
+          // ESP_LOGI(TAG, "XY: %u -> R: %hu, G: %hu, B: %hu | (datatype: %hu, size: %u)", xy, rgb[0], rgb[1], rgb[2], message->attribute.data.type, message->attribute.data.size);
         }
         else if (message->info.cluster == ESP_ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL)
         {
@@ -149,8 +151,12 @@ static void esp_zb_task(void *pvParameters)
     /* initialize Zigbee stack */
     esp_zb_cfg_t zb_nwk_cfg = ESP_ZB_ZED_CONFIG();
     esp_zb_init(&zb_nwk_cfg);
+
     esp_zb_color_dimmable_light_cfg_t light_cfg = ESP_ZB_DEFAULT_COLOR_DIMMABLE_LIGHT_CONFIG();
+    light_cfg.color_cfg.color_capabilities = 0b01001;
+    light_cfg.color_cfg.color_mode = 1; // Hue and saturation control color.
     esp_zb_ep_list_t *esp_zb_color_dimmable_light_ep = esp_zb_color_dimmable_light_ep_create(HA_ESP_LIGHT_ENDPOINT, &light_cfg);
+
     zcl_basic_manufacturer_info_t info = {
         .manufacturer_name = ESP_MANUFACTURER_NAME,
         .model_identifier = ESP_MODEL_IDENTIFIER,

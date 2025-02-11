@@ -62,6 +62,8 @@ void light_driver_set_color(uint32_t r, uint32_t g, uint32_t b);
 
 void light_driver_set_hue_and_saturation(uint8_t hue, uint8_t sat);
 
+void cie1931_to_rgb(uint8_t rgb[3], uint16_t X, uint16_t Y);
+
 void light_driver_set_brightness(uint8_t brightness);
 
 /**

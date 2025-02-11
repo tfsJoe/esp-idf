@@ -38,6 +38,7 @@
 #include "esp_log.h"
 #include "led_strip.h"
 #include "light_driver.h"
+#include <math.h>
 
 static led_strip_handle_t s_led_strip;
 static uint8_t s_red = 255, s_green = 255, s_blue = 255;
@@ -76,6 +77,39 @@ void light_driver_set_brightness(uint8_t brightness)
   ESP_ERROR_CHECK(led_strip_set_pixel(s_led_strip, 0, s_red, s_green, s_blue));
   ESP_ERROR_CHECK(led_strip_refresh(s_led_strip));
 }
+
+#include <stdio.h>
+
+// Convert CIE 1931 (X, Y; 16-bit unsigned) to RGB (8-bit)
+void cie1931_to_rgb(uint8_t rgb[3], uint16_t X, uint16_t Y) {
+    // Scale X and Y from 0-65535 to 0.0-1.0
+    float X_float = (float)X / 65535.0f;
+    float Y_float = (float)Y / 65535.0f;
+
+    // CIE 1931 to XYZ conversion matrix
+    float Z = 1.0f - X_float - Y_float;
+
+    // Convert from XYZ to RGB (using the sRGB color space matrix)
+    float R_linear = X_float * 3.2406f - Y_float * 1.5372f - Z * 0.4986f;
+    float G_linear = -X_float * 0.9689f + Y_float * 1.8758f + Z * 0.0415f;
+    float B_linear = X_float * 0.0556f - Y_float * 0.2040f + Z * 1.0572f;
+
+    // Apply gamma correction (sRGB)
+    float R = (R_linear > 0.0031308f) ? (1.055f * pow(R_linear, 1.0f / 2.4f) - 0.055f) : (12.92f * R_linear);
+    float G = (G_linear > 0.0031308f) ? (1.055f * pow(G_linear, 1.0f / 2.4f) - 0.055f) : (12.92f * G_linear);
+    float B = (B_linear > 0.0031308f) ? (1.055f * pow(B_linear, 1.0f / 2.4f) - 0.055f) : (12.92f * B_linear);
+
+    // Clamp RGB values to [0, 1]
+    R = (R > 1.0f) ? 1.0f : (R < 0.0f) ? 0.0f : R;
+    G = (G > 1.0f) ? 1.0f : (G < 0.0f) ? 0.0f : G;
+    B = (B > 1.0f) ? 1.0f : (B < 0.0f) ? 0.0f : B;
+
+    // Convert to 8-bit values and store in the RGB array
+    rgb[0] = (uint8_t)(R * 255);
+    rgb[1] = (uint8_t)(G * 255);
+    rgb[2] = (uint8_t)(B * 255);
+}
+
 
 void light_driver_init(bool power)
 {
