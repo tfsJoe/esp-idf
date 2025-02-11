@@ -106,16 +106,18 @@ static esp_err_t zb_attribute_handler(const esp_zb_zcl_set_attr_value_message_t 
         }
         else if (message->info.cluster == ESP_ZB_ZCL_CLUSTER_ID_COLOR_CONTROL) 
         {
-          uint8_t *hue_sat = (uint8_t *)message->attribute.data.value;
-          
-          ESP_LOGI(TAG, "Hue: %hu | Saturation:%hu", hue_sat[0], hue_sat[1]);
+          uint16_t *hue_sat = (uint16_t *)message->attribute.data.value;
+          uint8_t hue = (uint8_t)(*hue_sat & 0xFF);        // Extract lower byte
+          uint8_t saturation = (uint8_t)((*hue_sat >> 8) & 0xFF);  // Extract upper byte
 
-          light_driver_set_hue_and_saturation(hue_sat[0], hue_sat[1]);
+          ESP_LOGI(TAG, "Hue: %hu | Saturation:%hu (datatype: %hu, size: %u)", hue, saturation, message->attribute.data.type, message->attribute.data.size);
+
+          light_driver_set_hue_and_saturation(hue, saturation);
         }
-        else if (message->info.cluster == ESP_ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL && message->attribute.data.size == 1)
+        else if (message->info.cluster == ESP_ZB_ZCL_CLUSTER_ID_LEVEL_CONTROL)
         {
-          uint8_t brightness = (uint8_t)message->attribute.data.value;
-          ESP_LOGI(TAG, "Level set: %hu", brightness);
+          uint8_t brightness = *(uint8_t *)message->attribute.data.value;
+          ESP_LOGI(TAG, "Level set: %hu  (datatype: %hu, size: %u)", brightness, message->attribute.data.type, message->attribute.data.size);
           light_driver_set_brightness(brightness);
         }
         else if (message->info.cluster == ESP_ZB_ZCL_CLUSTER_ID_IDENTIFY)
