@@ -3,19 +3,22 @@
 #include "driver/i2s_std.h"
 #include "esp_log.h"
 
-#define I2S_WS   1  // LRCLK
-#define I2S_SCK  3  // BCLK
-#define I2S_SD  14  // DIN (Data In)
+#define I2S_WS   6    // LRCLK
+#define I2S_SCK  23   // BCLK
+#define I2S_SD   14   // Data input (MIC data pin)
+
 
 void app_main(void)
 {
+    ESP_LOGI("MAIN", "Delaying to let mic boot...");
+    vTaskDelay(pdMS_TO_TICKS(1000));
     ESP_LOGI("MAIN", "Starting I2S clock test...");
 
     i2s_chan_handle_t rx_handle;
-    i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_SLAVE);  // RX as slave
+    i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
 
     ESP_LOGI("MAIN", "Creating I2S channel...");
-    esp_err_t err = i2s_new_channel(&chan_cfg, &rx_handle, NULL);
+    esp_err_t err = i2s_new_channel(&chan_cfg, NULL, &rx_handle);
     if (err != ESP_OK) {
         ESP_LOGE("MAIN", "Failed to create I2S channel, error: %s", esp_err_to_name(err));
         return;
@@ -31,11 +34,11 @@ void app_main(void)
             .data_bit_width = I2S_DATA_BIT_WIDTH_16BIT,
             .slot_bit_width = I2S_SLOT_BIT_WIDTH_16BIT,
             .slot_mode = I2S_SLOT_MODE_MONO,
-            .slot_mask = I2S_STD_SLOT_LEFT,
+            .slot_mask = I2S_STD_SLOT_RIGHT,
             .ws_width = 16,
         },
         .gpio_cfg = {
-            .mclk = I2S_GPIO_UNUSED,
+            .mclk = 5,  // Unused but may be required to output a signal
             .bclk = I2S_SCK,  // BCLK
             .ws = I2S_WS,
             .dout = I2S_GPIO_UNUSED,
@@ -64,8 +67,23 @@ void app_main(void)
 
     ESP_LOGI("MAIN", "I2S clock config complete. BCLK on GPIO %d, WS on GPIO %d, DIN on GPIO %d.", I2S_SCK, I2S_WS, I2S_SD);
 
+    uint8_t i2s_data[512];  // or malloc if you want
+    size_t bytes_read;
+
     while (true) {
-        ESP_LOGI("MAIN", "I2S test running...");
+        esp_err_t read_err = i2s_channel_read(rx_handle, i2s_data, sizeof(i2s_data), &bytes_read, pdMS_TO_TICKS(1000));
+        if (read_err != ESP_OK) {
+            ESP_LOGW("MAIN", "i2s_channel_read failed: %s", esp_err_to_name(read_err));
+        } else if (bytes_read > 0) {
+            ESP_LOGI("MAIN", "Read %u bytes", (unsigned)bytes_read);
+
+            for (int i = 0; i < 8 && i * 2 + 1 < bytes_read; ++i) {
+                int16_t sample = ((int16_t)i2s_data[i * 2 + 1] << 8) | i2s_data[i * 2];
+                ESP_LOGI("SAMPLE", "Sample[%d] = %d", i, sample);
+            }
+        }
+
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
+
 }
